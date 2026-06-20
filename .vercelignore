@@ -1,0 +1,19 @@
+# Vercel only needs to build frontend/ — everything else in this
+# monorepo (contracts, circuit, price-pusher script) is irrelevant to
+# that build and would only slow it down / bloat the deployment.
+/contracts
+/frontend/scripts/price-pusher
+
+# Standard excludes
+node_modules
+.next
+.git
+*.log
+.env*.local
+.DS_Store
+
+# Rust/circuit build artifacts, never relevant to the JS build
+target
+*.wasm
+*.zkey
+*.ptau

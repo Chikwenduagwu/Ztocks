@@ -1,0 +1,12 @@
+{
+  "_comment": "Example witness input for portfolio_threshold.circom. All monetary values are scaled integers (multiply by 1e6 to avoid floats in-circuit). ownerAddress is the prover's Stellar account ID reduced to a 128-bit integer (e.g. first 16 bytes of the raw public key, big-endian). ownerCommit/threshold/minAssets are PUBLIC — every other field is PRIVATE and never leaves the prover's machine.",
+
+  "holdings": ["41230000", "34100000", "6310000", "24500000"],
+  "prices":   ["213570000", "178320000", "891460000", "175840000"],
+  "salt": "8841029384756203948572938475029384756",
+  "ownerAddress": "193847562039485762039485762039485762",
+
+  "threshold": "10000000000",
+  "minAssets": "4",
+  "ownerCommit": "_COMPUTED_OFFCHAIN_SEE_README_"
+}

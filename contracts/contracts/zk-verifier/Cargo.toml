@@ -1,0 +1,46 @@
+[package]
+name = "zk-verifier"
+version = "0.1.0"
+edition = "2021"
+publish = false
+rust-version = "1.89.0"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+doctest = false
+
+[[bin]]
+name = "gen_vkey"
+path = "src/bin/gen_vkey.rs"
+required-features = ["genvkey"]
+
+[[bin]]
+name = "encode_proof"
+path = "src/bin/encode_proof.rs"
+required-features = ["genvkey"]
+
+[dependencies]
+soroban-sdk = { workspace = true }
+
+[dependencies.serde_json]
+version = "1.0"
+optional = true
+
+[dependencies.ark-bls12-381]
+version = "0.4.0"
+optional = true
+
+[dependencies.ark-serialize]
+version = "0.4.2"
+optional = true
+
+[dev-dependencies]
+soroban-sdk = { workspace = true, features = ["testutils"] }
+ark-bls12-381 = "0.4.0"
+ark-serialize = "0.4.2"
+ark-ff = "0.4.2"
+ark-ec = "0.4.2"
+
+[features]
+testutils = ["soroban-sdk/testutils"]
+genvkey = ["serde_json", "ark-bls12-381", "ark-serialize"]
