@@ -6,11 +6,11 @@
 
 :root {
   /* Color tokens */
-  --background: #F9F9F7;
+  --background: #FFFFFF;
   --foreground: #0A0A0A;
-  --muted: #F0F0ED;
-  --muted-foreground: #6B6B65;
-  --border: #E2E2DC;
+  --muted: #F5F5F5;
+  --muted-foreground: #6B6B6B;
+  --border: #EAEAEA;
   --card: #FFFFFF;
   --card-foreground: #0A0A0A;
   --accent: #0A0A0A;
