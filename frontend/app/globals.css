@@ -32,22 +32,7 @@
   --container-padding: clamp(1.25rem, 5vw, 2rem);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0A0A0A;
-    --foreground: #F9F9F7;
-    --muted: #141414;
-    --muted-foreground: #8A8A85;
-    --border: #1E1E1C;
-    --card: #111111;
-    --card-foreground: #F9F9F7;
-    --accent: #F9F9F7;
-    --accent-foreground: #0A0A0A;
-    --grid-pattern: 
-      linear-gradient(rgba(249,249,247,0.04) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(249,249,247,0.04) 1px, transparent 1px);
-  }
-}
+
 
 * {
   margin: 0;
