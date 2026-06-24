@@ -1,11 +1,10 @@
+
 {
   "name": "ztocks",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "curl -sS https://stellar.org/bin/install.sh | sh && export PATH=$PATH:$HOME/.stellar/bin && stellar contract bindings typescript --network testnet --id $NEXT_PUBLIC_ZK_VERIFIER_CONTRACT_ID --output-dir ./src/contracts/zkverifier && stellar contract bindings typescript --network testnet --id $NEXT_PUBLIC_USDC_CONTRACT_ID --output-dir ./src/contracts/usdc && stellar contract bindings typescript --network testnet --id $NEXT_PUBLIC_LENDING_CONTRACT_ID --output-dir ./src/contracts/lending"
-    
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -28,6 +27,9 @@
     "recharts": "^2.15.3",
     "snarkjs": "^0.7.5",
     "tailwind-merge": "^2.6.0"
+    "vault-client": "file:./packages/vault",
+"lending-client": "file:./packages/lending",
+"price-oracle-client": "file:./packages/price-oracle"
   },
   "devDependencies": {
     "@types/node": "^20",
