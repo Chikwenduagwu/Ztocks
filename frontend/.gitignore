@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+packages/*/node_modules/
+
+# Next.js build output
+.next/
+out/
+
+# Generated package build artifacts (keep source, ignore dist/build)
+packages/*/dist/
+packages/*/build/
+
+# Env files (never commit secrets/config)
+.env.local
+.env*.local
+
+# Misc
+.DS_Store
+*.log
+npm-debug.log*
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
