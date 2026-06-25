@@ -26,7 +26,7 @@ use soroban_sdk::{
 // already exist on disk.
 mod price_oracle {
     soroban_sdk::contractimport!(
-        file = "../price-oracle/target/wasm32v1-none/release/price_oracle.wasm"
+        file = "../../target/wasm32v1-none/release/price_oracle.wasm"
     );
 }
 

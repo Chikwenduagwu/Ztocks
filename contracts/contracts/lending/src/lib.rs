@@ -18,18 +18,18 @@
 
 #![no_std]
 use soroban_sdk::{
-    contract, contracterror, contractimpl, contracttype, token,
+    contract, contracterror, contractimpl, contracttype, token, U256,
     crypto::bls12_381::{Fr, G1Affine, G2Affine},
     Address, Env, Symbol, Vec,
 };
 
 mod vault_contract {
-    soroban_sdk::contractimport!(file = "../vault/target/wasm32v1-none/release/vault.wasm");
+    soroban_sdk::contractimport!(file = "../../target/wasm32v1-none/release/vault.wasm");
 }
 
 mod zk_verifier_contract {
     soroban_sdk::contractimport!(
-        file = "../zk-verifier/target/wasm32v1-none/release/zk_verifier.wasm"
+        file = "../../target/wasm32v1-none/release/zk_verifier.wasm"
     );
 }
 
@@ -113,9 +113,9 @@ impl LendingContract {
         env: Env,
         user: Address,
         proof: Groth16Proof,
-        threshold: Fr,
-        min_assets: Fr,
-        owner_commit: Fr,
+        threshold: U256,
+        min_assets: U256,
+        owner_commit: U256,
     ) -> Result<bool, LendingError> {
         user.require_auth();
 
@@ -126,9 +126,9 @@ impl LendingContract {
             .ok_or(LendingError::NotInitialized)?;
 
         let verifier_proof = zk_verifier_contract::Groth16Proof {
-            a: proof.a,
-            b: proof.b,
-            c: proof.c,
+            a: proof.a.into(),
+            b: proof.b.into(),
+            c: proof.c.into(),
         };
         let pub_signals = Vec::from_array(&env, [threshold, min_assets, owner_commit]);
 

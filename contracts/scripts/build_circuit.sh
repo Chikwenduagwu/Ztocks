@@ -39,18 +39,18 @@ circom "$CIRCUITS_DIR/$CIRCUIT_NAME.circom" \
   -o "$BUILD_DIR" \
   -l "$CIRCUITS_DIR/node_modules"
 
-echo "==> [3/8] Starting Powers of Tau ceremony (bls12-381, 2^14)..."
+echo "==> [3/8] Starting Powers of Tau ceremony (bls12-381, 2^16)..."
 # NOTE: production deployments must use a multi-party ceremony.
 # This single-contributor setup is acceptable for hackathon/testnet only.
-snarkjs powersoftau new bls12-381 14 "$BUILD_DIR/pot14_0000.ptau" -v
-snarkjs powersoftau contribute "$BUILD_DIR/pot14_0000.ptau" "$BUILD_DIR/pot14_0001.ptau" \
+snarkjs powersoftau new bls12-381 16 "$BUILD_DIR/pot16_0000.ptau" -v
+snarkjs powersoftau contribute "$BUILD_DIR/pot16_0000.ptau" "$BUILD_DIR/pot16_0001.ptau" \
   --name="Ztocks hackathon contribution" -v -e="$(date +%s)-ztocks-entropy"
-snarkjs powersoftau prepare phase2 "$BUILD_DIR/pot14_0001.ptau" "$BUILD_DIR/pot14_final.ptau" -v
+snarkjs powersoftau prepare phase2 "$BUILD_DIR/pot16_0001.ptau" "$BUILD_DIR/pot16_final.ptau" -v
 
 echo "==> [4/8] Running Groth16 setup..."
 snarkjs groth16 setup \
   "$BUILD_DIR/$CIRCUIT_NAME.r1cs" \
-  "$BUILD_DIR/pot14_final.ptau" \
+  "$BUILD_DIR/pot16_final.ptau" \
   "$BUILD_DIR/${CIRCUIT_NAME}_0000.zkey"
 
 snarkjs zkey contribute \
