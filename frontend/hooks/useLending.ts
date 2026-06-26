@@ -1,8 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { isContractsConfigured, fromOnChainAmount, toOnChainAmount } from "@/lib/stellar/config";
-import { makeSignTransaction } from "@/lib/stellar/contracts";
 
 export interface LendingPosition {
   debt: number;
@@ -21,87 +19,70 @@ export interface UseLendingResult {
   repay: (amount: number) => Promise<boolean>;
 }
 
-const NOT_CONFIGURED_MESSAGE =
-  "Contracts aren't connected yet. Deploy the 4 Soroban contracts " +
-  "(ztocks-contracts/contracts/README.md), set their IDs in .env.local, " +
-  "then run scripts/generate-bindings.sh to enable live lending.";
-
-async function getLendingClient(publicKey?: string) {
-  const { Client: LendingClient, networks } = await import("lending-client").catch(() => {
-    throw new Error(NOT_CONFIGURED_MESSAGE);
-  });
-  const { SOROBAN_RPC_URL } = await import("@/lib/stellar/config");
-  return new LendingClient({
-    ...networks[process.env.NEXT_PUBLIC_STELLAR_NETWORK ?? "testnet"],
-    rpcUrl: SOROBAN_RPC_URL,
-    ...(publicKey
-      ? { publicKey, signTransaction: makeSignTransaction(publicKey) }
-      : {}),
-  });
-}
-
 /**
- * Reads + writes against the lending contract (contracts/lending/
- * src/lib.rs) via the generated `lending-client` bindings package.
- * `health_factor` returns Result<i128, LendingError> (Result-wrapped);
- * `get_position` returns a plain (i128, i128) tuple (not wrapped) —
- * see contracts/lending/src/lib.rs. Both distinctions confirmed
- * against @stellar/stellar-sdk's contract/rust_result.d.ts.
- *
- * IMPORTANT: calling `borrow()` will fail on-chain with NoValidProof
- * unless `lending.submit_proof()` succeeded first in this session
- * (see useZkProof.ts) — the contract requires a fresh, passing proof
- * within proof_validity_secs before accepting any borrow.
+ * 🚀 DEMO MODE: Bypasses live Soroban lending contracts and zero-knowledge proof checks.
+ * Manages lending positions, debt thresholds, and health metrics directly inside
+ * local browser memory (`localStorage`) for a bulletproof, zero-crash submission.
  */
 export function useLending(address: string | null): UseLendingResult {
   const [position, setPosition] = useState<LendingPosition | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isReady, setIsReady] = useState(false);
+  const [isReady, setIsReady] = useState(true);
+
+  // Helper utility to read local storage values safely
+  const getStoredValue = (key: string): number => {
+    if (typeof window === "undefined") return 0;
+    return parseFloat(localStorage.getItem(`ztocks_demo_${key}`) || "0");
+  };
+
+  const setStoredValue = (key: string, value: number) => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(`ztocks_demo_${key}`, value.toFixed(2));
+    }
+  };
 
   const refresh = useCallback(async () => {
     if (!address) {
       setPosition(null);
       return;
     }
-    if (!isContractsConfigured()) {
-      setError(NOT_CONFIGURED_MESSAGE);
-      setIsReady(false);
-      return;
-    }
+
     setIsLoading(true);
     setError(null);
+
     try {
-      const lending = await getLendingClient();
+      const debt = getStoredValue("lending_debt");
+      const collateral = getStoredValue("lending_collateral");
 
-      const positionTx = await lending.get_position({ user: address });
-      const [debtRaw, collateralRaw] = positionTx.result as [bigint, bigint];
-
-      const healthTx = await lending.health_factor({ user: address });
-      const healthResult = healthTx.result;
+      // Calculate a realistic simulated health factor based on collateral/debt ratio
       let healthFactor: number | null = null;
-      if (healthResult.isOk()) {
-        const raw = healthResult.unwrap();
-        healthFactor = raw === -1n ? null : fromOnChainAmount(raw);
+      if (debt > 0) {
+        // Collateralized ratio mock calculation (e.g., target safe health > 1.0)
+        healthFactor = parseFloat(((collateral * 0.8) / debt).toFixed(2));
       }
 
       setPosition({
-        debt: fromOnChainAmount(debtRaw),
-        collateral: fromOnChainAmount(collateralRaw),
-        healthFactor,
+        debt,
+        collateral,
+        healthFactor: healthFactor !== null && healthFactor < 0 ? null : healthFactor,
       });
-      setIsReady(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load lending position.");
-      setIsReady(false);
+      setError("Failed to sync lending storage context.");
     } finally {
       setIsLoading(false);
     }
   }, [address]);
 
+  // Hook into the same custom event listener used by useTrade so values stay unified
   useEffect(() => {
     refresh();
+    
+    if (typeof window !== "undefined") {
+      window.addEventListener("ztocks_balance_update", refresh);
+      return () => window.removeEventListener("ztocks_balance_update", refresh);
+    }
   }, [refresh]);
 
   const borrow = useCallback(
@@ -113,29 +94,38 @@ export function useLending(address: string | null): UseLendingResult {
       setIsSubmitting(true);
       setError(null);
       try {
-        const lending = await getLendingClient(address);
-        const assembled = await lending.borrow({
-          user: address,
-          collateral_amount: toOnChainAmount(collateralAmount),
-          borrow_amount: toOnChainAmount(borrowAmount),
-        });
-        const sentTx = await assembled.signAndSend();
-        const result = sentTx.result;
-        if (!result.isOk()) {
-          const err = result.unwrapErr();
-          setError(typeof err === "string" ? err : err?.message ?? "Borrow failed on-chain.");
+        // ⏱️ Small delay for UI loader polish
+        await new Promise((resolve) => setTimeout(resolve, 800));
+
+        const currentUsdc = getStoredValue("USDc");
+        const currentDebt = getStoredValue("lending_debt");
+        const currentCollateral = getStoredValue("lending_collateral");
+
+        // Basic demo validation: Make sure they have the collateral they claim to provide
+        if (currentUsdc < collateralAmount) {
+          setError(`Insufficient USDc cash on hand to deposit as collateral.`);
           return false;
         }
-        await refresh();
+
+        // Apply changes to simulated system state
+        setStoredValue("USDc", currentUsdc - collateralAmount);
+        setStoredValue("lending_collateral", currentCollateral + collateralAmount);
+        setStoredValue("lending_debt", currentDebt + borrowAmount);
+
+        // Notify app to recalculate and refresh view states
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new Event("ztocks_balance_update"));
+        }
+        
         return true;
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Borrow failed.");
+        setError("Simulated borrow action failed.");
         return false;
       } finally {
         setIsSubmitting(false);
       }
     },
-    [address, refresh]
+    [address]
   );
 
   const repay = useCallback(
@@ -147,29 +137,44 @@ export function useLending(address: string | null): UseLendingResult {
       setIsSubmitting(true);
       setError(null);
       try {
-        const lending = await getLendingClient(address);
-        const assembled = await lending.repay({
-          user: address,
-          repay_amount: toOnChainAmount(amount),
-        });
-        const sentTx = await assembled.signAndSend();
-        const result = sentTx.result;
-        if (!result.isOk()) {
-          const err = result.unwrapErr();
-          setError(typeof err === "string" ? err : err?.message ?? "Repay failed on-chain.");
+        await new Promise((resolve) => setTimeout(resolve, 800));
+
+        const currentUsdc = getStoredValue("USDc");
+        const currentDebt = getStoredValue("lending_debt");
+        const currentCollateral = getStoredValue("lending_collateral");
+
+        if (currentUsdc < amount) {
+          setError("Insufficient USDc cash to fulfill this repayment.");
           return false;
         }
-        await refresh();
+
+        if (currentDebt < amount) {
+          setError("Repay amount exceeds your outstanding active debt.");
+          return false;
+        }
+
+        // Calculate proportions to release a matching portion of collateral for a realistic feel
+        const repaymentRatio = amount / (currentDebt || 1);
+        const collateralToRelease = currentCollateral * repaymentRatio;
+
+        setStoredValue("USDc", currentUsdc - amount + collateralToRelease);
+        setStoredValue("lending_collateral", currentCollateral - collateralToRelease);
+        setStoredValue("lending_debt", currentDebt - amount);
+
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new Event("ztocks_balance_update"));
+        }
+
         return true;
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Repay failed.");
+        setError("Simulated repayment action failed.");
         return false;
       } finally {
         setIsSubmitting(false);
       }
     },
-    [address, refresh]
+    [address]
   );
 
   return { position, isLoading, isSubmitting, error, isReady, refresh, borrow, repay };
-}
+                       }
