@@ -26,9 +26,10 @@ export default function HomePage() {
         walletAddress={address}
         onConnect={handleConnect}
       />
-      <div className="pt-16">
-        <TickerBar />
-      </div>
+      {/* <div className="pt-16">
+  <TickerBar />
+</div> */}
+
       <main>
         <HeroSection onConnect={handleConnect} />
         <FeaturesSection />
